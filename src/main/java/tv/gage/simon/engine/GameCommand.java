@@ -17,6 +17,5 @@ public class GameCommand {
 	}
 	
 	private CommandType type;
-	private String data;
 	
 }
