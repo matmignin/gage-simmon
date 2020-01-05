@@ -11,10 +11,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PlayerCommand {
 
-	public static enum CommandType {
-		MOVE
+	public static enum PlayerCommandType {
+		MOVE,
+		DEFAULT
 	}
 	
-	private CommandType type;
+	private PlayerCommandType type;
 	
 }
