@@ -2,6 +2,8 @@ package tv.gage.simon;
 
 import java.io.IOException;
 
+import tv.gage.common.exception.PlayerRosterFullException;
+import tv.gage.common.exception.UnknownPlayerException;
 import tv.gage.common.game.Game;
 import tv.gage.common.game.Player;
 import tv.gage.common.messaging.BroadcastService;
@@ -17,6 +19,18 @@ public class Simon extends Game {
 	public Simon(BroadcastService broadcastService, String gameCode) {
 		super(Simon.class, broadcastService, gameCode, 4, 8);
 		this.engineService = new EngineService(broadcastServiceHelper, players);
+	}
+	
+	@Override
+	public void addPlayer(Player player) throws PlayerRosterFullException {
+		super.addPlayer(player);
+		broadcastServiceHelper.broadcastToGame(String.format("Added %s", player.getName()));
+	}
+	
+	@Override
+	public void removePlayer(Player player) throws UnknownPlayerException {
+		super.removePlayer(player);
+		broadcastServiceHelper.broadcastToGame(String.format("Removed %s", player.getName()));
 	}
 	
 	public void receiveGameCommand(String jsonCommand) {

@@ -3,6 +3,7 @@ package tv.gage.simon.engine;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import tv.gage.common.game.Player;
 import tv.gage.common.messaging.BroadcastServiceHelper;
@@ -63,7 +64,9 @@ public class Engine {
 	private void nextRound() {
 		addMove();
 		resetMoveIndex();
-		broadcastServiceHelper.broadcastToGame(moves);
+		broadcastServiceHelper.broadcastToGame(
+				moves.stream().map(player -> player.getName())
+				.collect(Collectors.toList()));
 	}
 	
 	private void nextMove() {
@@ -79,10 +82,13 @@ public class Engine {
 		broadcastServiceHelper.broadcastToGame(payload);
 	}
 	
-	private void broadcastIncorrectMove(Player player) {
+	private void broadcastIncorrectMove(Player losingPlayer) {
 		String payload = "incorrect";
-		broadcastServiceHelper.broadcastToPlayer(player, payload);
 		broadcastServiceHelper.broadcastToGame(payload);
+		broadcastServiceHelper.broadcastToPlayer(losingPlayer, payload);
+		broadcastServiceHelper.broadcastToPlayers(players.stream()
+				.filter(player -> player != losingPlayer)
+				.collect(Collectors.toList()), "win");
 	}
 	
 	private void resetMoves() {
