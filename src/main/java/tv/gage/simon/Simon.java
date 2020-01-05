@@ -4,22 +4,19 @@ import java.io.IOException;
 
 import tv.gage.common.game.Game;
 import tv.gage.common.game.Player;
-import tv.gage.common.socket.SocketService;
+import tv.gage.common.messaging.BroadcastService;
 import tv.gage.common.util.JsonUtils;
 import tv.gage.simon.engine.GameCommand;
 import tv.gage.simon.engine.PlayerCommand;
-import tv.gage.simon.service.BroadcastService;
 import tv.gage.simon.service.EngineService;
 
 public class Simon extends Game {
 
-	private BroadcastService broadcastService;
 	private EngineService engineService;
 
-	public Simon(SocketService socketService, String gameCode) {
-		super(Simon.class, socketService, gameCode, 4, 8);
-		broadcastService = new BroadcastService(socketService, gameCode);
-		engineService = new EngineService(broadcastService, gameCode, players);
+	public Simon(BroadcastService broadcastService, String gameCode) {
+		super(Simon.class, broadcastService, gameCode, 4, 8);
+		this.engineService = new EngineService(broadcastServiceHelper, players);
 	}
 	
 	public void receiveGameCommand(String jsonCommand) {
@@ -36,7 +33,7 @@ public class Simon extends Game {
 			}
 		}
 		catch (IOException e) {
-			broadcastService.broadcastToGame(String.format("Error parsing command %s", jsonCommand));
+			broadcastServiceHelper.broadcastToGame(String.format("Error parsing command %s", jsonCommand));
 		}
 	}
 
@@ -51,7 +48,7 @@ public class Simon extends Game {
 			}
 		}
 		catch (IOException e) {
-			broadcastService.broadcastToPlayer(player, String.format("Error parsing command %s", jsonCommand));
+			broadcastServiceHelper.broadcastToPlayer(player, String.format("Error parsing command %s", jsonCommand));
 		}
 	}
 	

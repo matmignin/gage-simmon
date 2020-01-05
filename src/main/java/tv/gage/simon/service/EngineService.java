@@ -3,14 +3,15 @@ package tv.gage.simon.service;
 import java.util.List;
 
 import tv.gage.common.game.Player;
+import tv.gage.common.messaging.BroadcastServiceHelper;
 import tv.gage.simon.engine.Engine;
 
 public class EngineService {
 
 	private Engine engine;
 	
-	public EngineService(BroadcastService broadcastService, String gameCode, List<Player> players) {
-		this.engine = new Engine(broadcastService, gameCode, players);
+	public EngineService(BroadcastServiceHelper broadcastServiceHelper, List<Player> players) {
+		this.engine = new Engine(broadcastServiceHelper, players);
 	}
 	
 	public void startGame() {

@@ -5,18 +5,18 @@ import java.util.List;
 import java.util.Random;
 
 import tv.gage.common.game.Player;
-import tv.gage.simon.service.BroadcastService;
+import tv.gage.common.messaging.BroadcastServiceHelper;
 
 public class Engine {
 
-	private BroadcastService broadcastService;
+	private BroadcastServiceHelper broadcastServiceHelper;
 	private List<Player> players;
 	private List<Player> moves = new ArrayList<Player>();
 	private int moveIndex = 0;
 	private boolean running;
 	
-	public Engine(BroadcastService broadcastService, String gameCode, List<Player> players) {
-		this.broadcastService = broadcastService;
+	public Engine(BroadcastServiceHelper broadcastServiceHelper, List<Player> players) {
+		this.broadcastServiceHelper = broadcastServiceHelper;
 		this.players = players;
 	}
 	
@@ -25,7 +25,7 @@ public class Engine {
 			setRunning(true);
 			resetMoves();
 			nextRound();
-			broadcastService.broadcastToPlayers(players, "start");
+			broadcastServiceHelper.broadcastToPlayers(players, "start");
 		}
 	}
 	
@@ -46,7 +46,7 @@ public class Engine {
 	public void outOfTime() {
 		if (running) {
 			setRunning(false);
-			broadcastService.broadcastToPlayers(players, "out of time");
+			broadcastServiceHelper.broadcastToPlayers(players, "out of time");
 			Player player = moves.get(moveIndex);
 			distributePointsToEveryoneBut(player);
 		}
@@ -63,7 +63,7 @@ public class Engine {
 	private void nextRound() {
 		addMove();
 		resetMoveIndex();
-		broadcastService.broadcastToGame(moves);
+		broadcastServiceHelper.broadcastToGame(moves);
 	}
 	
 	private void nextMove() {
@@ -75,14 +75,14 @@ public class Engine {
 	
 	private void broadcastCorrectMove(Player player) {
 		String payload = "correct";
-		broadcastService.broadcastToPlayer(player, payload);
-		broadcastService.broadcastToGame(payload);
+		broadcastServiceHelper.broadcastToPlayer(player, payload);
+		broadcastServiceHelper.broadcastToGame(payload);
 	}
 	
 	private void broadcastIncorrectMove(Player player) {
 		String payload = "incorrect";
-		broadcastService.broadcastToPlayer(player, payload);
-		broadcastService.broadcastToGame(payload);
+		broadcastServiceHelper.broadcastToPlayer(player, payload);
+		broadcastServiceHelper.broadcastToGame(payload);
 	}
 	
 	private void resetMoves() {
