@@ -11,12 +11,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class GameCommand {
 
-	public static enum CommandType {
+	public static enum GameCommandType {
 		START,
-		OUT_OF_TIME
+		OUT_OF_TIME,
+		DEFAULT
 	}
 	
-	private CommandType type;
-	private String data;
+	private GameCommandType type;
 	
 }

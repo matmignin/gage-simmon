@@ -3,49 +3,70 @@ package tv.gage.simon.engine;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import tv.gage.common.game.Player;
-import tv.gage.common.socket.SocketService;
-import tv.gage.simon.service.BroadcastService;
+import tv.gage.common.messaging.BroadcastServiceHelper;
 
 public class Engine {
 
-	private BroadcastService broadcastService;
+	private BroadcastServiceHelper broadcastServiceHelper;
 	private List<Player> players;
-	private List<String> moves = new ArrayList<String>();
+	private List<Player> moves = new ArrayList<Player>();
 	private int moveIndex = 0;
+	private boolean running;
 	
-	
-	public Engine(SocketService socketService, String gameCode, List<Player> players) {
-		this.broadcastService = new BroadcastService(socketService, gameCode);
+	public Engine(BroadcastServiceHelper broadcastServiceHelper, List<Player> players) {
+		this.broadcastServiceHelper = broadcastServiceHelper;
 		this.players = players;
 	}
 	
 	public void startGame() {
-		resetMoves();
-		nextRound();
-		broadcastService.broadcastToPlayers(players, "start");
+		if (!players.isEmpty()) {
+			setRunning(true);
+			resetMoves();
+			nextRound();
+			broadcastServiceHelper.broadcastToPlayers(players, "start");
+		}
 	}
 	
 	public void playerMove(Player player) {
-		if (moves.get(moveIndex) == player.getPlayerCode()) {
-			broadcastCorrectMove(player);
-			nextMove();
-		}
-		else {
-			distributePoints(player);
-			broadcastIncorrectMove(player);
+		if (running) {
+			if (moves.get(moveIndex) == player) {
+				broadcastCorrectMove(player);
+				nextMove();
+			}
+			else {
+				setRunning(false);
+				distributePointsToEveryoneBut(player);
+				broadcastIncorrectMove(player);
+			}
 		}
 	}
 	
 	public void outOfTime() {
-		
+		if (running) {
+			setRunning(false);
+			broadcastServiceHelper.broadcastToPlayers(players, "out of time");
+			Player player = moves.get(moveIndex);
+			distributePointsToEveryoneBut(player);
+		}
 	}
 	
+	public void setRunning(boolean running) {
+		this.running = running;
+	}
+	
+	public boolean isRunning() {
+		return running;
+	}
+
 	private void nextRound() {
 		addMove();
 		resetMoveIndex();
-		broadcastService.broadcastToGame(moves);
+		broadcastServiceHelper.broadcastToGame(
+				moves.stream().map(player -> player.getName())
+				.collect(Collectors.toList()));
 	}
 	
 	private void nextMove() {
@@ -57,14 +78,17 @@ public class Engine {
 	
 	private void broadcastCorrectMove(Player player) {
 		String payload = "correct";
-		broadcastService.broadcastToPlayer(player, payload);
-		broadcastService.broadcastToGame(payload);
+		broadcastServiceHelper.broadcastToPlayer(player, payload);
+		broadcastServiceHelper.broadcastToGame(payload);
 	}
 	
-	private void broadcastIncorrectMove(Player player) {
+	private void broadcastIncorrectMove(Player losingPlayer) {
 		String payload = "incorrect";
-		broadcastService.broadcastToPlayer(player, payload);
-		broadcastService.broadcastToGame(payload);
+		broadcastServiceHelper.broadcastToGame(payload);
+		broadcastServiceHelper.broadcastToPlayer(losingPlayer, payload);
+		broadcastServiceHelper.broadcastToPlayers(players.stream()
+				.filter(player -> player != losingPlayer)
+				.collect(Collectors.toList()), "win");
 	}
 	
 	private void resetMoves() {
@@ -72,20 +96,23 @@ public class Engine {
 	}
 	
 	private void addMove() {
-		moves.add(randomPlayer().getPlayerCode());
-		broadcastService.broadcastToPlayers(players, moves.toString());
+		moves.add(randomPlayer());
 	}
 	
+	public List<Player> getMoves() {
+		return moves;
+	}
+
 	private void resetMoveIndex() {
 		moveIndex = 0;
 	}
 	
 	private Player randomPlayer() {
-		int index = new Random().ints(0, (players.size())).findFirst().getAsInt();
+		int index = new Random().ints(0, (players.size() - 1) + 1).findFirst().getAsInt();
 		return players.get(index);
 	}
 	
-	private void distributePoints(Player losingPlayer) {
+	private void distributePointsToEveryoneBut(Player losingPlayer) {
 		players.forEach(player -> {
 			if (player != losingPlayer) {
 				player.setScore(player.getScore() + 1);
